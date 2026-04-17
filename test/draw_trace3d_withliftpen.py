@@ -145,7 +145,11 @@ def main():
         clim=[-0.1, 1.1], 
         line_width=4, 
         render_lines_as_tubes=True,
-        show_scalar_bar=# ---------------- 动画绘制逻辑 ----------------
+        show_scalar_bar=False,  # 隐藏颜色条，保持画面干净
+        name='dynamic_trace'
+    )
+
+    # ---------------- 动画绘制逻辑 ----------------
     
     # 1. 创建一个空的基底对象，负责一直挂载在渲染器上
     trace_mesh = pv.PolyData() 
@@ -190,9 +194,7 @@ def main():
         time.sleep(args.speed)
 
     print("绘制完成！灰色线代表提笔空中位移，橙色代表实际下笔轨迹。")
-    plotter.show()False,  # 隐藏颜色条，保持画面干净
-        name='dynamic_trace'
-    )
+    plotter.show()
 
     plotter.show(interactive_update=True)
 
