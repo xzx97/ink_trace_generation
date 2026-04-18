@@ -1,5 +1,38 @@
 import numpy as np
 
+def resample_stroke_2d(stroke_points, step_size_m=0.002):
+    """
+    将 2D 笔画按指定的空间绝对距离（弧长）进行等距重采样
+    解决鼠标采样密集或稀疏的问题，强制点位均匀分布
+    """
+    pts = np.array(stroke_points)
+    
+    # 滤除异常数据
+    if len(pts) < 2:
+        return stroke_points
+        
+    # 计算每一小段的长度和累积长度（物理里程计）
+    segment_lengths = np.linalg.norm(np.diff(pts, axis=0), axis=1)
+    cum_lengths = np.insert(np.cumsum(segment_lengths), 0, 0.0)
+    total_length = cum_lengths[-1]
+    
+    # 如果这整个笔画的长度甚至不到我们设定的一个步长，保留头尾即可
+    if total_length < step_size_m or total_length == 0:
+        return [stroke_points[0], stroke_points[-1]]
+        
+    # 根据总长度和步长，计算需要多少个均匀的点
+    num_even_points = max(2, int(total_length / step_size_m))
+    
+    # 生成完美的等差数列里程点
+    even_lengths = np.linspace(0, total_length, num_even_points)
+    
+    # 对 X 和 Y 坐标分别基于里程点进行一维线性插值
+    resampled = np.empty((num_even_points, 2))
+    resampled[:, 0] = np.interp(even_lengths, cum_lengths, pts[:, 0])
+    resampled[:, 1] = np.interp(even_lengths, cum_lengths, pts[:, 1])
+    
+    return resampled.tolist()
+
 def smooth_stroke_2d(stroke_points, window_length=11, polyorder=3):
     """
     对单条独立笔画的 2D 坐标进行 Savitzky-Golay 平滑

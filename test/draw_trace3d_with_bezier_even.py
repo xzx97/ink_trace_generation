@@ -7,7 +7,7 @@ import csv
 import time
 import sys
 import os
-from utils.smooth_2d_strokes import smooth_stroke_2d
+from utils.smooth_2d_strokes import smooth_stroke_2d, resample_stroke_2d
 from utils.smooth_3d_trace import generate_even_bezier_hop
 
 class CoordinateFrame:
@@ -33,6 +33,8 @@ def main():
     parser.add_argument("--smooth_window", type=int, default=11, help="2D 平滑窗口大小")
     parser.add_argument("--lift_height", type=float, default=10.0, help="抬笔安全高度 (mm)")
     parser.add_argument("--hop_res", type=float, default=1.0, help="空中插值轨迹的空间分辨率/步长 (单位: mm)")
+    # --- 新增：墨迹重采样参数 ---
+    parser.add_argument("--trace_step", type=float, default=2.0, help="墨迹轨迹的空间等距采样步长 (mm)")
     parser.add_argument("--output_file", type=str, default=None, help="如果提供，将把最终的 3D 轨迹 (Base坐标系) 导出到此 CSV 文件")
 
     args = parser.parse_args()
@@ -59,11 +61,19 @@ def main():
                 continue
     if current_stroke: strokes.append(current_stroke) # 保存最后一笔
 
-    print(f"解析完成，共提取到 {len(strokes)} 个独立笔画。")
+    print(f"成功解析，共提取到 {len(strokes)} 个独立的实线笔画。")
 
-    # 2. 对每个独立笔画进行 2D XY 平滑
+    # 3.1 对每个独立笔画进行 2D XY 平滑 (去除毛刺)
     if args.smooth_window > 0:
         strokes = [smooth_stroke_2d(s, window_length=args.smooth_window) for s in strokes]
+        print("✅ 笔画 2D 平滑处理完成。")
+
+    # 3.2 --- 新增：对平滑后的笔画进行等距重采样 (控制点密度) ---
+    if args.trace_step > 0:
+        trace_step_m = args.trace_step / 1000.0
+        strokes = [resample_stroke_2d(s, step_size_m=trace_step_m) for s in strokes]
+        print(f"✅ 笔画等距重采样完成，墨迹点距被强制控制在约 {args.trace_step} mm。")
+
 
     # 3. 核心：构建包含平滑落笔和 3D 空中贝塞尔插值的完整空间轨迹
     z_safe_m = args.lift_height / 1000.0
@@ -97,7 +107,7 @@ def main():
     T_paper = np.array([
         [np.cos(theta),  0, -np.sin(theta),  0.288],
         [0,              1,  0            ,  0.330],
-        [np.sin(theta),  0,  np.cos(theta),  0.377],
+        [np.sin(theta),  0,  np.cos(theta),  0.277],
         [            0,              0, 0,   1]
     ])
     # T_paper = np.array([
