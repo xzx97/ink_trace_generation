@@ -31,7 +31,7 @@ def main():
     parser.add_argument("--speed", type=float, default=0.01, help="绘制动画刷新延迟")
     parser.add_argument("--hide_air", action="store_true", help="默认隐藏空中轨迹")
     parser.add_argument("--smooth_window", type=int, default=11, help="2D 平滑窗口大小")
-    parser.add_argument("--lift_height", type=float, default=10.0, help="抬笔安全高度 (mm)")
+    parser.add_argument("--lift_height", type=float, default=20.0, help="抬笔安全高度 (mm)")
     parser.add_argument("--hop_res", type=float, default=1.0, help="空中插值轨迹的空间分辨率/步长 (单位: mm)")
     # --- 新增：墨迹重采样参数 ---
     parser.add_argument("--trace_step", type=float, default=2.0, help="墨迹轨迹的空间等距采样步长 (mm)")
@@ -105,9 +105,9 @@ def main():
     # 4. 全局矩阵映射
     theta = np.deg2rad(90)
     T_paper = np.array([
-        [np.cos(theta),  0, -np.sin(theta),  0.288],
-        [0,              1,  0            ,  0.330],
-        [np.sin(theta),  0,  np.cos(theta),  0.277],
+        [np.cos(theta),  0, -np.sin(theta),  0.307],
+        [0,              1,  0            ,  0.280],
+        [np.sin(theta),  0,  np.cos(theta),  0.164],
         [            0,              0, 0,   1]
     ])
     # T_paper = np.array([
